@@ -1,4 +1,4 @@
-# turbine
+# cloudwrap
 
 This library is an opinionated utility for fetching configuration and secrets from
 AWS SSM Parameter Store and AWS Secrets Manager. Its primary use is to act as a wrapper
@@ -17,7 +17,7 @@ This utility is only associated with fetching of the underlying AWS services. We
 Downloading from `cargo`:
 
 ```
-cargo install turbine
+cargo install cloudwrap
 ```
 
 ## Usage
@@ -25,17 +25,17 @@ cargo install turbine
 Describe keys for a service:
 
 ```
-$ turbine staging service-name-test describe
+$ cloudwrap staging service-name-test describe
  KEY | VERSION | LAST_MODIFIED_USER  | LAST_MODIFIED_DATE
 -----+---------+---------------------+---------------------
- one |       1 | vienna@turbine.com  | 2018-04-24 19:36:02
- two |       1 | lochy@turbine.com   | 2018-04-24 19:36:16
+ one |       1 | vienna@cloudwrap.com  | 2018-04-24 19:36:02
+ two |       1 | lochy@cloudwrap.com   | 2018-04-24 19:36:16
 ```
 
 Print key/value pairs for a service:
 
 ```
-$ turbine staging service-name-test stdout
+$ cloudwrap staging service-name-test stdout
  KEY | VALUE
 -----+----------
  one | valueone
@@ -46,12 +46,12 @@ $ turbine staging service-name-test stdout
 Execute a command with the configuration injected as environment variables:
 
 ```
-$ turbine staging service-name-test exec env
+$ cloudwrap staging service-name-test exec env
 ONE=valueone
 TWO=valuetwo
 ```
 
-See `turbine --help` for a full listing of available commands.
+See `cloudwrap --help` for a full listing of available commands.
 
 # License
 

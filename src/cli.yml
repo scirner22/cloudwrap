@@ -1,4 +1,4 @@
-name: turbine
+name: cloudwrap
 version: "1.0"
 author: Stephen Cirner <scirner22@gmail.com>
 about: Interfaces with AWS to provide an opinionated way to manage application configuration.
