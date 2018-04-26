@@ -5,14 +5,19 @@ AWS SSM Parameter Store and AWS Secrets Manager. Its primary use is to act as a 
 around a command to execute. The executed command is injected with the configuration as
 environment variables.
 
-// TODO pathing
+Key/value pairs are fetched by using resource paths. The path must be specified in the form of
+`/{environment}/{service_name}/key`. This utility always expects a path of three components,
+namely a key that is nested under an environment and service name.
+
+This utility is only associated with fetching of the underlying AWS services. We opt to use
+[terraform](https://www.terraform.io/) for managing these configuration key/value pairs.
 
 ## Download
 
 Downloading from `cargo`:
 
 ```
-cargo install turbine-rs
+cargo install turbine
 ```
 
 ## Usage
