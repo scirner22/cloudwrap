@@ -4,17 +4,19 @@ extern crate clap;
 #[macro_use]
 extern crate prettytable;
 extern crate rusoto_core;
-//extern crate rusoto_secretsmanager;
+extern crate rusoto_secretsmanager;
 extern crate rusoto_ssm;
 
 use std::{fs::File, io::prelude::*, path::PathBuf, process::Command};
 
 use clap::App;
 
+mod config;
+mod error;
+mod output;
 mod secretsmanager;
 mod ssm;
-mod config;
-mod output;
+mod types;
 
 use config::Config;
 use output::Printable;
@@ -40,22 +42,47 @@ fn main() {
     let (output, parameters): (_, Parameters) = if matches.subcommand_matches("describe").is_some()
     {
         let ssm = ssm::SsmClient::default();
-        let parameters = ssm.describe_parameters(&config).unwrap();
-        (Output::Describe, Box::new(parameters))
+        let _ssm_parameters = ssm.describe_parameters(&config).unwrap();
+
+        let secrets_manager = secretsmanager::SecretsManagerClient::default();
+        let secrets_manager_parameters = secrets_manager.list_secrets(&config).unwrap();
+
+        //let mut parameters = ssm_parameters;
+        //parameters.append(&mut secrets_manager_parameters);
+
+        (Output::Describe, Box::new(secrets_manager_parameters))
     } else if matches.subcommand_matches("stdout").is_some() {
         let ssm = ssm::SsmClient::default();
-        let parameters = ssm.get_parameters(&config).unwrap();
-        (Output::Stdout, Box::new(parameters))
+        let _ssm_parameters = ssm.get_parameters(&config).unwrap();
+
+        let secrets_manager = secretsmanager::SecretsManagerClient::default();
+        let secrets_manager_parameters = secrets_manager.get_secret_values(&config).unwrap();
+
+        (Output::Stdout, Box::new(secrets_manager_parameters))
     } else if let Some(file_matches) = matches.subcommand_matches("file") {
         let path = file_matches.value_of("path").expect("required field");
         let ssm = ssm::SsmClient::default();
-        let parameters = ssm.get_parameters(&config).unwrap();
-        (Output::File(path.into()), Box::new(parameters))
+        let _ssm_parameters = ssm.get_parameters(&config).unwrap();
+
+        let secrets_manager = secretsmanager::SecretsManagerClient::default();
+        let secrets_manager_parameters = secrets_manager.get_secret_values(&config).unwrap();
+
+        (
+            Output::File(path.into()),
+            Box::new(secrets_manager_parameters),
+        )
     } else if let Some(exec_matches) = matches.subcommand_matches("exec") {
         let cmd = exec_matches.value_of("cmd").expect("required field");
         let ssm = ssm::SsmClient::default();
-        let parameters = ssm.get_parameters(&config).unwrap();
-        (Output::Exec(cmd.into()), Box::new(parameters))
+        let _ssm_parameters = ssm.get_parameters(&config).unwrap();
+
+        let secrets_manager = secretsmanager::SecretsManagerClient::default();
+        let secrets_manager_parameters = secrets_manager.get_secret_values(&config).unwrap();
+
+        (
+            Output::Exec(cmd.into()),
+            Box::new(secrets_manager_parameters),
+        )
     } else {
         // TODO this isn't really unreachable, figure out way to guarantee that in clap
         unreachable!()

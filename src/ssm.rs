@@ -1,9 +1,10 @@
 use rusoto_core::Region;
-use rusoto_ssm::{DescribeParametersError, DescribeParametersRequest, DescribeParametersResult,
-                 GetParametersByPathError, GetParametersByPathRequest, GetParametersByPathResult,
-                 Parameter, ParameterMetadata, ParameterStringFilter, Ssm, SsmClient as Client};
+use rusoto_ssm::{DescribeParametersRequest, DescribeParametersResult, GetParametersByPathRequest,
+                 GetParametersByPathResult, Parameter, ParameterMetadata, ParameterStringFilter,
+                 Ssm, SsmClient as Client};
 
 use config::Config;
+use types::Result;
 
 pub struct SsmClient {
     inner: Client,
@@ -33,15 +34,12 @@ impl SsmClient {
         req
     }
 
-    pub fn describe_parameters(
-        &self,
-        config: &Config,
-    ) -> Result<Vec<ParameterMetadata>, DescribeParametersError> {
+    pub fn describe_parameters(&self, config: &Config) -> Result<Vec<ParameterMetadata>> {
         let mut parameters = Vec::new();
         let mut req = self.initial_describe_request(config);
 
         loop {
-            let res = self.inner.describe_parameters(&req).sync()?;
+            let res = self.inner.describe_parameters(req).sync()?;
             res.parameters
                 .clone()
                 .map(|mut p| parameters.append(&mut p));
@@ -61,15 +59,12 @@ impl SsmClient {
         req
     }
 
-    pub fn get_parameters(
-        &self,
-        config: &Config,
-    ) -> Result<Vec<Parameter>, GetParametersByPathError> {
+    pub fn get_parameters(&self, config: &Config) -> Result<Vec<Parameter>> {
         let mut parameters = Vec::new();
         let mut req = self.initial_get_request(config);
 
         loop {
-            let res = self.inner.get_parameters_by_path(&req).sync()?;
+            let res = self.inner.get_parameters_by_path(req).sync()?;
             res.parameters
                 .clone()
                 .map(|mut p| parameters.append(&mut p));
