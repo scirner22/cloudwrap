@@ -6,9 +6,9 @@ extern crate prettytable;
 extern crate rusoto_core;
 extern crate rusoto_secretsmanager;
 extern crate rusoto_ssm;
+extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
 extern crate serde_json;
 
 use std::{fs::File, io::prelude::*, path::PathBuf, process::Command};
@@ -38,9 +38,9 @@ fn output_describe(config: &Config) {
 
 fn output_stdout(config: &Config) {
     let ssm = ssm::SsmClient::default();
-    let ssm = ssm.get_parameters(&config).unwrap();
+    let ssm = ssm.get_parameters(config).unwrap();
     let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    let secrets_manager = secrets_manager.get_secret_values(&config).unwrap();
+    let secrets_manager = secrets_manager.get_secret_values(config).unwrap();
 
     let mut closure = move |pairs: Vec<(String, String)>| {
         for (k, v) in pairs {
@@ -53,14 +53,14 @@ fn output_stdout(config: &Config) {
 }
 
 fn output_file<S>(config: &Config, path: S)
-    where
-        S: Into<PathBuf>,
+where
+    S: Into<PathBuf>,
 {
     let path = path.into();
     let ssm = ssm::SsmClient::default();
-    let ssm = ssm.get_parameters(&config).unwrap();
+    let ssm = ssm.get_parameters(config).unwrap();
     let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    let secrets_manager = secrets_manager.get_secret_values(&config).unwrap();
+    let secrets_manager = secrets_manager.get_secret_values(config).unwrap();
 
     path.parent().map(|p| {
         if !p.exists() {
@@ -80,24 +80,26 @@ fn output_file<S>(config: &Config, path: S)
     secrets_manager.export().map(&mut closure);
 }
 
-fn output_exec(config: &Config, cmd: String) {
+fn output_exec(config: &Config, cmd: &str) {
     let mut parameters = Vec::new();
     let ssm = ssm::SsmClient::default();
-    let ssm = ssm.get_parameters(&config).unwrap();
+    let ssm = ssm.get_parameters(config).unwrap();
     let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    let secrets_manager = secrets_manager.get_secret_values(&config).unwrap();
+    let secrets_manager = secrets_manager.get_secret_values(config).unwrap();
 
     ssm.export().map(|mut pairs| parameters.append(&mut pairs));
-    secrets_manager.export().map(|mut pairs| parameters.append(&mut pairs));
+    secrets_manager
+        .export()
+        .map(|mut pairs| parameters.append(&mut pairs));
 
     if parameters.is_empty() {
-        Command::new(&cmd)
+        Command::new(cmd)
             .env_clear()
             .envs(parameters)
             .spawn()
             .expect(&format!("failed to start {}", cmd));
     } else {
-        Command::new(&cmd)
+        Command::new(cmd)
             .env_clear()
             .spawn()
             .expect(&format!("failed to start {}", cmd));
@@ -106,7 +108,7 @@ fn output_exec(config: &Config, cmd: String) {
 
 fn output_shell(config: &Config, key: String) {
     let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    let secret = secrets_manager.get_secret_value(&config, key).unwrap();
+    let secret = secrets_manager.get_secret_value(config, key).unwrap();
 
     if let Some(shell_config) = secret.secret_string {
         let postgres: Postgres = serde_json::from_str(&shell_config).unwrap();
@@ -141,7 +143,7 @@ fn main() {
     } else if let Some(exec_matches) = matches.subcommand_matches("exec") {
         let cmd = exec_matches.value_of("cmd").expect("required field");
 
-        output_exec(&config, cmd.into());
+        output_exec(&config, cmd);
     } else if let Some(shell_matches) = matches.subcommand_matches("shell") {
         let key = shell_matches.value_of("key").expect("required field");
 

@@ -4,7 +4,7 @@ use rusoto_secretsmanager::{GetSecretValueRequest, GetSecretValueResponse, ListS
                             SecretsManagerClient as Client};
 
 use config::Config;
-use error:: Error;
+use error::Error;
 use types::Result;
 
 pub struct SecretsManagerClient {
@@ -64,7 +64,7 @@ impl SecretsManagerClient {
                 req.secret_id = secret.arn.unwrap();
                 let res = self.inner.get_secret_value(req).sync()?;
 
-                return Ok(res)
+                return Ok(res);
             }
         }
 

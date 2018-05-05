@@ -171,11 +171,11 @@ pub struct Postgres {
 impl From<Postgres> for Vec<(String, String)> {
     fn from(p: Postgres) -> Self {
         vec![
-            ("PGHOST".into(), p.host.into()),
+            ("PGHOST".into(), p.host),
             ("PGPORT".into(), p.port.to_string()),
-            ("PGDATABASE".into(), p.dbname.into()),
-            ("PGUSER".into(), p.username.into()),
-            ("PGPASSWORD".into(), p.password.into()),
+            ("PGDATABASE".into(), p.dbname),
+            ("PGUSER".into(), p.username),
+            ("PGPASSWORD".into(), p.password),
         ]
     }
 }
