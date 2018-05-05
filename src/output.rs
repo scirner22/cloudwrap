@@ -149,7 +149,7 @@ impl Exportable for Vec<GetSecretValueResponse> {
             // TODO String::escape_default() is currently in nightly
             let value: String = value.chars().flat_map(|c| c.escape_default()).collect();
 
-            pairs.push((key, value));
+            pairs.push((key, format!("\"{}\"", value)));
         }
 
         Some(pairs)

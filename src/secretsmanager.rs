@@ -53,7 +53,7 @@ impl SecretsManagerClient {
         }
     }
 
-    pub fn get_secret_value(&self, config: &Config, key: String) -> Result<GetSecretValueResponse> {
+    pub fn get_secret_value(&self, config: &Config, key: &str) -> Result<GetSecretValueResponse> {
         let full_key = format!("{}/{}", config.as_path(), key);
         let secrets = self.list_secrets(config)?;
 
@@ -68,7 +68,7 @@ impl SecretsManagerClient {
             }
         }
 
-        Err(Error::InvalidKey(key))
+        Err(Error::InvalidKey(full_key))
     }
 
     pub fn get_secret_values(&self, config: &Config) -> Result<Vec<GetSecretValueResponse>> {

@@ -23,24 +23,28 @@ mod ssm;
 mod types;
 
 use config::Config;
+use error::Error;
+use types::Result;
 use output::{Exportable, Postgres, Printable};
 
-fn output_describe(config: &Config) {
+fn output_describe(config: &Config) -> Result<()> {
     let ssm = ssm::SsmClient::default();
-    let ssm = ssm.describe_parameters(config).unwrap();
+    let ssm = ssm.describe_parameters(config)?;
     let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    let secrets_manager = secrets_manager.list_secrets(config).unwrap();
+    let secrets_manager = secrets_manager.list_secrets(config)?;
 
     // TODO fix this print format
     ssm.get_table().printstd();
     secrets_manager.get_table().printstd();
+
+    Ok(())
 }
 
-fn output_stdout(config: &Config) {
+fn output_stdout(config: &Config) -> Result<()> {
     let ssm = ssm::SsmClient::default();
-    let ssm = ssm.get_parameters(config).unwrap();
+    let ssm = ssm.get_parameters(config)?;
     let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    let secrets_manager = secrets_manager.get_secret_values(config).unwrap();
+    let secrets_manager = secrets_manager.get_secret_values(config)?;
 
     let mut closure = move |pairs: Vec<(String, String)>| {
         for (k, v) in pairs {
@@ -50,17 +54,19 @@ fn output_stdout(config: &Config) {
 
     ssm.export().map(&mut closure);
     secrets_manager.export().map(&mut closure);
+
+    Ok(())
 }
 
-fn output_file<S>(config: &Config, path: S)
+fn output_file<S>(config: &Config, path: S) -> Result<()>
 where
     S: Into<PathBuf>,
 {
     let path = path.into();
     let ssm = ssm::SsmClient::default();
-    let ssm = ssm.get_parameters(config).unwrap();
+    let ssm = ssm.get_parameters(config)?;
     let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    let secrets_manager = secrets_manager.get_secret_values(config).unwrap();
+    let secrets_manager = secrets_manager.get_secret_values(config)?;
 
     path.parent().map(|p| {
         if !p.exists() {
@@ -78,14 +84,16 @@ where
 
     ssm.export().map(&mut closure);
     secrets_manager.export().map(&mut closure);
+
+    Ok(())
 }
 
-fn output_exec(config: &Config, cmd: &str) {
+fn output_exec(config: &Config, cmd: &str) -> Result<()> {
     let mut parameters = Vec::new();
     let ssm = ssm::SsmClient::default();
-    let ssm = ssm.get_parameters(config).unwrap();
+    let ssm = ssm.get_parameters(config)?;
     let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    let secrets_manager = secrets_manager.get_secret_values(config).unwrap();
+    let secrets_manager = secrets_manager.get_secret_values(config)?;
 
     ssm.export().map(|mut pairs| parameters.append(&mut pairs));
     secrets_manager
@@ -95,32 +103,34 @@ fn output_exec(config: &Config, cmd: &str) {
     if parameters.is_empty() {
         Command::new(cmd)
             .env_clear()
-            .envs(parameters)
             .spawn()
-            .expect(&format!("failed to start {}", cmd));
+            .map(|_| ())
+            .map_err(Into::into)
     } else {
         Command::new(cmd)
             .env_clear()
+            .envs(parameters)
             .spawn()
-            .expect(&format!("failed to start {}", cmd));
+            .map(|_| ())
+            .map_err(Into::into)
     }
 }
 
-fn output_shell(config: &Config, key: String) {
+fn output_shell(config: &Config, key: &str) -> Result<()> {
     let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    let secret = secrets_manager.get_secret_value(config, key).unwrap();
+    let secret = secrets_manager.get_secret_value(config, key)?;
 
     if let Some(shell_config) = secret.secret_string {
-        let postgres: Postgres = serde_json::from_str(&shell_config).unwrap();
+        let postgres: Postgres = serde_json::from_str(&shell_config)?;
 
         Command::new("psql")
             .env_clear()
             .envs(Into::<Vec<(String, String)>>::into(postgres))
             .spawn()
-            .expect("failed to start psql");
+            .map(|_| ())
+            .map_err(Into::into)
     } else {
-        // TODO fix
-        println!("none");
+        Err(Error::InvalidKey(format!("{}/{}", config.as_path(), key)))
     }
 }
 
@@ -132,24 +142,27 @@ fn main() {
     let service = matches.value_of("service").expect("required field");
     let config = Config::new(environment, service);
 
-    if matches.subcommand_matches("describe").is_some() {
-        output_describe(&config);
+    let result = if matches.subcommand_matches("describe").is_some() {
+        output_describe(&config)
     } else if matches.subcommand_matches("stdout").is_some() {
-        output_stdout(&config);
+        output_stdout(&config)
     } else if let Some(file_matches) = matches.subcommand_matches("file") {
         let path = file_matches.value_of("path").expect("required field");
 
-        output_file(&config, path);
+        output_file(&config, path)
     } else if let Some(exec_matches) = matches.subcommand_matches("exec") {
         let cmd = exec_matches.value_of("cmd").expect("required field");
 
-        output_exec(&config, cmd);
+        output_exec(&config, cmd)
     } else if let Some(shell_matches) = matches.subcommand_matches("shell") {
         let key = shell_matches.value_of("key").expect("required field");
 
-        output_shell(&config, key.into());
+        output_shell(&config, key)
     } else {
-        // TODO this isn't really unreachable, figure out way to guarantee that in clap
         unreachable!()
+    };
+
+    if let Err(e) = result {
+        println!("{:?}", e)
     }
 }
