@@ -4,6 +4,7 @@ use rusoto_secretsmanager::{GetSecretValueRequest, GetSecretValueResponse, ListS
                             SecretsManagerClient as Client};
 
 use config::Config;
+use error:: Error;
 use types::Result;
 
 pub struct SecretsManagerClient {
@@ -50,6 +51,24 @@ impl SecretsManagerClient {
                 }
             }
         }
+    }
+
+    pub fn get_secret_value(&self, config: &Config, key: String) -> Result<GetSecretValueResponse> {
+        let full_key = format!("{}/{}", config.as_path(), key);
+        let secrets = self.list_secrets(config)?;
+
+        // TODO cleanup
+        for secret in secrets {
+            if secret.name == Some(full_key.clone()) {
+                let mut req = GetSecretValueRequest::default();
+                req.secret_id = secret.arn.unwrap();
+                let res = self.inner.get_secret_value(req).sync()?;
+
+                return Ok(res)
+            }
+        }
+
+        Err(Error::InvalidKey(key))
     }
 
     pub fn get_secret_values(&self, config: &Config) -> Result<Vec<GetSecretValueResponse>> {

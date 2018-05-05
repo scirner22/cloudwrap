@@ -6,6 +6,10 @@ extern crate prettytable;
 extern crate rusoto_core;
 extern crate rusoto_secretsmanager;
 extern crate rusoto_ssm;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+extern crate serde_json;
 
 use std::{fs::File, io::prelude::*, path::PathBuf, process::Command};
 
@@ -19,16 +23,103 @@ mod ssm;
 mod types;
 
 use config::Config;
-use output::Printable;
+use output::{Postgres, Printable};
 
-type Parameters = Box<Printable>;
+fn output_describe(config: &Config) {
+    let ssm = ssm::SsmClient::default();
+    let ssm = ssm.describe_parameters(config).unwrap();
+    let secrets_manager = secretsmanager::SecretsManagerClient::default();
+    let secrets_manager = secrets_manager.list_secrets(config).unwrap();
 
-#[derive(Debug)]
-enum Output {
-    Describe,
-    Stdout,
-    File(PathBuf),
-    Exec(String),
+    // TODO fix this print format
+    ssm.get_table().printstd();
+    secrets_manager.get_table().printstd();
+}
+
+fn output_stdout(config: &Config) {
+    let ssm = ssm::SsmClient::default();
+    let ssm = ssm.get_parameters(&config).unwrap();
+    let secrets_manager = secretsmanager::SecretsManagerClient::default();
+    let secrets_manager = secrets_manager.get_secret_values(&config).unwrap();
+
+    let mut closure = move |pairs: Vec<(String, String)>| {
+        for (k, v) in pairs {
+            println!("{}={}", k, v);
+        }
+    };
+
+    ssm.export().map(&mut closure);
+    secrets_manager.export().map(&mut closure);
+}
+
+fn output_file<S>(config: &Config, path: S)
+    where
+        S: Into<PathBuf>,
+{
+    let path = path.into();
+    let ssm = ssm::SsmClient::default();
+    let ssm = ssm.get_parameters(&config).unwrap();
+    let secrets_manager = secretsmanager::SecretsManagerClient::default();
+    let secrets_manager = secrets_manager.get_secret_values(&config).unwrap();
+
+    path.parent().map(|p| {
+        if !p.exists() {
+            panic!(format!("{:?} does not exist", p))
+        }
+    });
+
+    let mut file = File::create(path).expect("opening file");
+    let mut closure = move |pairs: Vec<(String, String)>| {
+        for (k, v) in pairs {
+            file.write_all(format!("export {}={}\n", k, v).as_bytes())
+                .expect("writing to file");
+        }
+    };
+
+    ssm.export().map(&mut closure);
+    secrets_manager.export().map(&mut closure);
+}
+
+fn output_exec(config: &Config, cmd: String) {
+    let mut parameters = Vec::new();
+    let ssm = ssm::SsmClient::default();
+    let ssm = ssm.get_parameters(&config).unwrap();
+    let secrets_manager = secretsmanager::SecretsManagerClient::default();
+    let secrets_manager = secrets_manager.get_secret_values(&config).unwrap();
+
+    ssm.export().map(|mut pairs| parameters.append(&mut pairs));
+    secrets_manager.export().map(|mut pairs| parameters.append(&mut pairs));
+
+    if parameters.is_empty() {
+        Command::new(&cmd)
+            .env_clear()
+            .envs(parameters)
+            .spawn()
+            .expect(&format!("failed to start {}", cmd));
+    } else {
+        Command::new(&cmd)
+            .env_clear()
+            .spawn()
+            .expect(&format!("failed to start {}", cmd));
+    }
+}
+
+fn output_shell(config: &Config, key: String) {
+    let secrets_manager = secretsmanager::SecretsManagerClient::default();
+    let secret = secrets_manager.get_secret_value(&config, key).unwrap();
+
+    if let Some(shell_config) = secret.secret_string {
+        let postgres: Postgres = serde_json::from_str(&shell_config).unwrap();
+
+        Command::new("psql")
+            .env_clear()
+            .envs(Into::<Vec<(String, String)>>::into(postgres))
+            .spawn()
+            .expect("failed to start psql");
+    } else {
+        // TODO fix
+        println!("none");
+    }
 }
 
 fn main() {
@@ -39,86 +130,24 @@ fn main() {
     let service = matches.value_of("service").expect("required field");
     let config = Config::new(environment, service);
 
-    let (output, parameters): (_, Parameters) = if matches.subcommand_matches("describe").is_some()
-    {
-        let ssm = ssm::SsmClient::default();
-        let _ssm_parameters = ssm.describe_parameters(&config).unwrap();
-
-        let secrets_manager = secretsmanager::SecretsManagerClient::default();
-        let secrets_manager_parameters = secrets_manager.list_secrets(&config).unwrap();
-
-        //let mut parameters = ssm_parameters;
-        //parameters.append(&mut secrets_manager_parameters);
-
-        (Output::Describe, Box::new(secrets_manager_parameters))
+    if matches.subcommand_matches("describe").is_some() {
+        output_describe(&config);
     } else if matches.subcommand_matches("stdout").is_some() {
-        let ssm = ssm::SsmClient::default();
-        let _ssm_parameters = ssm.get_parameters(&config).unwrap();
-
-        let secrets_manager = secretsmanager::SecretsManagerClient::default();
-        let secrets_manager_parameters = secrets_manager.get_secret_values(&config).unwrap();
-
-        (Output::Stdout, Box::new(secrets_manager_parameters))
+        output_stdout(&config);
     } else if let Some(file_matches) = matches.subcommand_matches("file") {
         let path = file_matches.value_of("path").expect("required field");
-        let ssm = ssm::SsmClient::default();
-        let _ssm_parameters = ssm.get_parameters(&config).unwrap();
 
-        let secrets_manager = secretsmanager::SecretsManagerClient::default();
-        let secrets_manager_parameters = secrets_manager.get_secret_values(&config).unwrap();
-
-        (
-            Output::File(path.into()),
-            Box::new(secrets_manager_parameters),
-        )
+        output_file(&config, path);
     } else if let Some(exec_matches) = matches.subcommand_matches("exec") {
         let cmd = exec_matches.value_of("cmd").expect("required field");
-        let ssm = ssm::SsmClient::default();
-        let _ssm_parameters = ssm.get_parameters(&config).unwrap();
 
-        let secrets_manager = secretsmanager::SecretsManagerClient::default();
-        let secrets_manager_parameters = secrets_manager.get_secret_values(&config).unwrap();
+        output_exec(&config, cmd.into());
+    } else if let Some(shell_matches) = matches.subcommand_matches("shell") {
+        let key = shell_matches.value_of("key").expect("required field");
 
-        (
-            Output::Exec(cmd.into()),
-            Box::new(secrets_manager_parameters),
-        )
+        output_shell(&config, key.into());
     } else {
         // TODO this isn't really unreachable, figure out way to guarantee that in clap
         unreachable!()
-    };
-
-    match output {
-        Output::File(path) => {
-            path.parent().map(|p| {
-                if !p.exists() {
-                    panic!(format!("{:?} does not exist", p))
-                }
-            });
-            let mut file = File::create(path).expect("opening file");
-
-            parameters.export().map(|pairs| {
-                for (k, v) in pairs {
-                    file.write_all(format!("export {}={}\n", k, v).as_bytes())
-                        .expect("writing to file");
-                }
-            });
-        }
-        Output::Exec(cmd) => match parameters.export() {
-            Some(parameters) => {
-                Command::new(&cmd)
-                    .env_clear()
-                    .envs(parameters)
-                    .spawn()
-                    .expect(&format!("failed to start {}", cmd));
-            }
-            None => {
-                Command::new(&cmd)
-                    .env_clear()
-                    .spawn()
-                    .expect(&format!("failed to start {}", cmd));
-            }
-        },
-        _ => parameters.get_table().printstd(),
     }
 }

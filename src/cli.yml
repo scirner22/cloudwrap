@@ -26,3 +26,9 @@ subcommands:
             - cmd:
                 required: true
                 help: Command to execute in a forked process.
+    - shell:
+        about: Starts a shell given the value for the key provided (Ex. a postgres config will start a postgres shell).
+        args:
+            - key:
+                required: true
+                help: Command to execute in a forked process.

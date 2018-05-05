@@ -157,10 +157,36 @@ impl Printable for Vec<GetSecretValueResponse> {
             let key = p.get_service_name();
             let key = key.to_uppercase().replace("-", "_");
             let value = p.secret_string.clone().unwrap();
+            // TODO String::escape_default() is currently in nightly
+            let value: String = value.chars().flat_map(|c| c.escape_default()).collect();
 
             pairs.push((key, value));
         }
 
         Some(pairs)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Postgres {
+    host: String,
+    port: i32,
+    dbname: String,
+    username: String,
+    password: String,
+    engine: String,
+    db_instance_identifier: String,
+}
+
+impl From<Postgres> for Vec<(String, String)> {
+    fn from(p: Postgres) -> Self {
+        vec![
+            ("PGHOST".into(), p.host.into()),
+            ("PGPORT".into(), p.port.to_string()),
+            ("PGDATABASE".into(), p.dbname.into()),
+            ("PGUSER".into(), p.username.into()),
+            ("PGPASSWORD".into(), p.password.into()),
+        ]
     }
 }

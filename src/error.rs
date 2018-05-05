@@ -7,6 +7,7 @@ pub enum Error {
     ListSecretsError(ListSecretsError),
     DescribeParametersError(DescribeParametersError),
     GetParametersByPathError(GetParametersByPathError),
+    InvalidKey(String),
 }
 
 impl From<GetSecretValueError> for Error {
