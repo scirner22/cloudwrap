@@ -23,7 +23,7 @@ mod ssm;
 mod types;
 
 use config::Config;
-use output::{Postgres, Printable};
+use output::{Exportable, Postgres, Printable};
 
 fn output_describe(config: &Config) {
     let ssm = ssm::SsmClient::default();

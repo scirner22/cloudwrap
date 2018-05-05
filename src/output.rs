@@ -37,19 +37,8 @@ impl Service for GetSecretValueResponse {
     }
 }
 
-trait UserCreation {
-    fn last_modified_user(&self) -> String;
-}
-
-impl UserCreation for ParameterMetadata {
-    fn last_modified_user(&self) -> String {
-        split_take_last('/', self.last_modified_user.clone())
-    }
-}
-
 pub trait Printable {
     fn get_table(&self) -> Table;
-    fn export(&self) -> Option<Vec<(String, String)>>;
 }
 
 impl Printable for Vec<Parameter> {
@@ -67,20 +56,6 @@ impl Printable for Vec<Parameter> {
 
         table
     }
-
-    fn export(&self) -> Option<Vec<(String, String)>> {
-        let mut pairs = Vec::new();
-
-        for p in self {
-            let key = p.get_service_name();
-            let key = key.to_uppercase().replace("-", "_");
-            let value = p.value.clone().unwrap();
-
-            pairs.push((key, value));
-        }
-
-        Some(pairs)
-    }
 }
 
 impl Printable for Vec<ParameterMetadata> {
@@ -91,7 +66,7 @@ impl Printable for Vec<ParameterMetadata> {
 
         for p in self {
             let key = p.get_service_name();
-            let user = p.last_modified_user();
+            let user = split_take_last('/', p.last_modified_user.clone());
             let version = p.version.unwrap_or(0);
             let date = p.last_modified_date.unwrap();
             let date = NaiveDateTime::from_timestamp(date.floor() as i64, 0);
@@ -100,10 +75,6 @@ impl Printable for Vec<ParameterMetadata> {
         }
 
         table
-    }
-
-    fn export(&self) -> Option<Vec<(String, String)>> {
-        None
     }
 }
 
@@ -128,10 +99,6 @@ impl Printable for Vec<SecretListEntry> {
 
         table
     }
-
-    fn export(&self) -> Option<Vec<(String, String)>> {
-        None
-    }
 }
 
 impl Printable for Vec<GetSecretValueResponse> {
@@ -149,7 +116,29 @@ impl Printable for Vec<GetSecretValueResponse> {
 
         table
     }
+}
 
+pub trait Exportable {
+    fn export(&self) -> Option<Vec<(String, String)>>;
+}
+
+impl Exportable for Vec<Parameter> {
+    fn export(&self) -> Option<Vec<(String, String)>> {
+        let mut pairs = Vec::new();
+
+        for p in self {
+            let key = p.get_service_name();
+            let key = key.to_uppercase().replace("-", "_");
+            let value = p.value.clone().unwrap();
+
+            pairs.push((key, value));
+        }
+
+        Some(pairs)
+    }
+}
+
+impl Exportable for Vec<GetSecretValueResponse> {
     fn export(&self) -> Option<Vec<(String, String)>> {
         let mut pairs = Vec::new();
 
