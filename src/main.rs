@@ -24,8 +24,8 @@ mod types;
 
 use config::Config;
 use error::Error;
-use types::Result;
 use output::{Exportable, Postgres, Printable};
+use types::Result;
 
 fn output_describe(config: &Config) -> Result<()> {
     let ssm = ssm::SsmClient::default();

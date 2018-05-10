@@ -1,6 +1,27 @@
+dist: trusty
 language: rust
+cache:
+  directories:
+    - ~/.cargo
+rust:
+  - stable
+os:
+  - linux
+before_install:
+  - sudo apt-get update -q
+  - sudo apt-get install ruby ruby-dev rubygems build-essential
+  - gem install --no-ri --no-rdoc fpm
 before_script:
-- rustup component add rustfmt-preview
+  - rustup component add rustfmt-preview
 script:
-- cargo fmt --all -- --write-mode=diff
-- cargo build
+  - |
+      if [ "$TRAVIS_PULL_REQUEST" == true ]; then
+        cargo update && \
+        cargo fmt --all -- --write-mode=diff && \
+        cargo build
+      fi
+  - |
+      if [ "$TRAVIS_PULL_REQUEST" == false ]; then
+        cargo update && \
+        cargo build -- release
+      fi
