@@ -7,7 +7,7 @@ os:
   - linux
 before_install:
   - sudo apt-get update -q
-  - sudo apt-get install ruby ruby-dev rubygems build-essential
+  - sudo apt-get install ruby ruby-dev rubygems-integration build-essential
   - gem install --no-ri --no-rdoc fpm
 before_script:
   - rustup component add rustfmt-preview
