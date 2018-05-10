@@ -1,5 +1,7 @@
 # cloudwrap
 
+<a href="https://travis-ci.org/scirner22/cloudwrap" title="Travis Build Status"><img src="https://travis-ci.org/scirner22/cloudwrap.svg?branch=master" alt="travis-badge"></img></a>
+
 This library is an opinionated utility for fetching configuration and secrets from
 AWS SSM Parameter Store and AWS Secrets Manager. Its primary use is to act as a wrapper
 around a command to execute. The executed command is injected with the configuration as
