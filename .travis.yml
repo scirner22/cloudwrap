@@ -12,14 +12,10 @@ before_install:
 before_script:
   - rustup component add rustfmt-preview
 script:
-  - |
-      if [ "$TRAVIS_PULL_REQUEST" == true ]; then
-        cargo update && \
-        cargo fmt --all -- --write-mode=diff && \
-        cargo build
-      fi
-  - |
-      if [ "$TRAVIS_PULL_REQUEST" == false ]; then
-        cargo update && \
-        cargo build --release
-      fi
+  - test $TRAVIS_PULL_REQUEST = true && \
+    cargo update && \
+    cargo fmt --all -- --write-mode=diff && \
+    cargo build
+  - test $TRAVIS_PULL_REQUEST = false && \
+    cargo update && \
+    cargo build --release
