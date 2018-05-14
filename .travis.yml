@@ -12,6 +12,16 @@ before_install:
 before_script:
   - rustup component add rustfmt-preview
 script:
-  - cargo update
-  - cargo fmt --all -- --write-mode=diff
-  - cargo build
+  - |
+    if [ "$TRAVIS_BRANCH" == "master" ]; then
+      cargo build --release
+    else
+      cargo update
+      cargo fmt --all -- --write-mode=diff
+      cargo build
+    fi
+after_script:
+  - |
+    if [ "$TRAVIS_BRANCH" == "master" ]; then
+      ./build_apk.sh
+    fi
