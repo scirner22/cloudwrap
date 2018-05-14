@@ -11,10 +11,11 @@ before_install:
   - gem install --no-ri --no-rdoc fpm
 before_script:
   - rustup component add rustfmt-preview
+  - rustup target add x86_64-unknown-linux-musl
 script:
   - |
-    if [ "$TRAVIS_BRANCH" == "master" ]; then
-      cargo build --release
+    if [ "$TRAVIS_BRANCH" == "feature/apk-package" ]; then
+      cargo build --release --target x86_64-unknown-linux-musl
     else
       cargo update
       cargo fmt --all -- --write-mode=diff
