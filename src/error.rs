@@ -6,6 +6,7 @@ use serde_json::Error as JsonError;
 
 #[derive(Debug)]
 pub enum Error {
+    ExecError,
     GetSecretValueError(GetSecretValueError),
     ListSecretsError(ListSecretsError),
     DescribeParametersError(DescribeParametersError),

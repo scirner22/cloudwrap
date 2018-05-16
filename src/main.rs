@@ -112,7 +112,13 @@ fn output_exec(config: &Config, cmd_args: &mut Vec<&str>) -> Result<()> {
         spawn.args(cmd_args);
     }
 
-    spawn.spawn().map(|_| ()).map_err(Into::into)
+    let status = spawn.status()?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(Error::ExecError)
+    }
 }
 
 fn output_shell(config: &Config, key: &str) -> Result<()> {
@@ -166,7 +172,5 @@ fn main() {
         unreachable!()
     };
 
-    if let Err(e) = result {
-        println!("{:?}", e)
-    }
+    result.unwrap()
 }
