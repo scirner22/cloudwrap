@@ -26,7 +26,6 @@ script:
     if [ "$TRAVIS_BRANCH" == "finalize/0.1.0" ]; then
       cross build --release --target x86_64-unknown-linux-musl
     else
-      cargo update
       cargo fmt --all -- --write-mode=diff
       cargo build
     fi

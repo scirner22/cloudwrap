@@ -1,6 +1,7 @@
 extern crate chrono;
 #[macro_use]
 extern crate clap;
+extern crate openssl_probe;
 #[macro_use]
 extern crate prettytable;
 extern crate rusoto_core;
@@ -133,6 +134,8 @@ fn output_shell(config: &Config, key: &str) -> Result<()> {
 }
 
 fn main() {
+    openssl_probe::init_ssl_cert_env_vars();
+
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
