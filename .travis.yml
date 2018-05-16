@@ -24,7 +24,7 @@ install:
 
 script:
   - |
-    if [ "$TRAVIS_BRANCH" == "feature/apk-package" ]; then
+    if [ "$TRAVIS_BRANCH" == "master" ]; then
       cross build --release --target x86_64-unknown-linux-musl
     else
       cargo update
@@ -34,6 +34,6 @@ script:
 
 after_script:
   - |
-    if [ "$TRAVIS_BRANCH" == "feature/apk-package" ]; then
+    if [ "$TRAVIS_BRANCH" == "master" ]; then
       sh ci/build_apk.sh
     fi
