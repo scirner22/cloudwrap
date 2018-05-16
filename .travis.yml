@@ -23,7 +23,7 @@ install:
 
 script:
   - |
-    if [ "$TRAVIS_BRANCH" == "finalize/0.1.0" ]; then
+    if [ "$TRAVIS_BRANCH" == "master" ]; then
       cross build --release --target x86_64-unknown-linux-musl
     else
       cargo fmt --all -- --write-mode=diff
@@ -32,6 +32,6 @@ script:
 
 after_script:
   - |
-    if [ "$TRAVIS_BRANCH" == "finalize/0.1.0" ]; then
+    if [ "$TRAVIS_BRANCH" == "master" ]; then
       sh ci/build_apk.sh
     fi
