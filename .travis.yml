@@ -32,6 +32,6 @@ script:
 
 after_script:
   - |
-    if [ "$TRAVIS_BRANCH" == "master" ]; then
+    if [ "$TRAVIS_BRANCH" == "feature/apk-package" ]; then
       sh ci/build_apk.sh
     fi
