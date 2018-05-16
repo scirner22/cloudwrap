@@ -13,6 +13,8 @@ before_install:
   - source ~/.cargo/env || true
   - rustup self update
   - sudo apt-get update -q
+  - pip install --user awscli
+  - export PATH=$PATH:$HOME/.local/bin
 
 install:
   - cargo install --force cross
