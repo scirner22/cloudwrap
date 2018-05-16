@@ -1,31 +1,37 @@
+sudo: required
 dist: trusty
 language: rust
+services: docker
 cache: cargo
+
 rust:
   - stable
 os:
   - linux
+
 before_install:
+  - source ~/.cargo/env || true
+  - rustup self update
   - sudo apt-get update -q
-  - sudo apt-get install ruby ruby-dev rubygems-integration build-essential
-  - sudo apt-get install musl musl-tools
-  - sudo apt-get install pkg-config libssl-dev
-  - gem install --no-ri --no-rdoc fpm
-before_script:
+
+install:
+  - cargo install cross
   - rustup component add rustfmt-preview
-  - rustup target add x86_64-unknown-linux-musl
+  - sudo apt-get install ruby ruby-dev rubygems-integration build-essential
+  - gem install --no-ri --no-rdoc fpm
+
 script:
   - |
     if [ "$TRAVIS_BRANCH" == "feature/apk-package" ]; then
-      PKG_CONFIG_ALLOW_CROSS=1 cargo build --release --target x86_64-unknown-linux-musl
-      ls target/
+      cross build --release --target x86_64-unknown-linux-musl
     else
       cargo update
       cargo fmt --all -- --write-mode=diff
       cargo build
     fi
+
 after_script:
   - |
     if [ "$TRAVIS_BRANCH" == "master" ]; then
-      ./build_apk.sh
+      sh ci/build_apk.sh
     fi
