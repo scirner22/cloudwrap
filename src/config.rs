@@ -16,6 +16,6 @@ impl Config {
     }
 
     pub fn as_path(&self) -> String {
-        format!("/{}/{}", self.environment, self.service)
+        format!("/{}/{}/", self.environment, self.service)
     }
 }

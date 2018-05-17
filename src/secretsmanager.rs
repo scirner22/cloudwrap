@@ -43,7 +43,7 @@ impl SecretsManagerClient {
                             s.name
                                 .clone()
                                 .unwrap_or_else(|| "".into())
-                                .starts_with(&format!("{}/", config.as_path()))
+                                .starts_with(&config.as_path())
                         })
                         .collect();
 
@@ -54,7 +54,7 @@ impl SecretsManagerClient {
     }
 
     pub fn get_secret_value(&self, config: &Config, key: &str) -> Result<GetSecretValueResponse> {
-        let full_key = format!("{}/{}", config.as_path(), key);
+        let full_key = format!("{}{}", config.as_path(), key);
         let secrets = self.list_secrets(config)?;
 
         // TODO cleanup

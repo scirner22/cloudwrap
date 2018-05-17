@@ -135,7 +135,7 @@ fn output_shell(config: &Config, key: &str) -> Result<()> {
             .map(|_| ())
             .map_err(Into::into)
     } else {
-        Err(Error::InvalidKey(format!("{}/{}", config.as_path(), key)))
+        Err(Error::InvalidKey(format!("{}{}", config.as_path(), key)))
     }
 }
 
