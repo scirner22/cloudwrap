@@ -54,6 +54,7 @@ impl SsmClient {
         let mut req = GetParametersByPathRequest::default();
         req.path = config.as_path();
         req.recursive = Some(true);
+        req.with_decryption = Some(true);
         req
     }
 
