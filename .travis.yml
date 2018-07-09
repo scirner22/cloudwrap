@@ -21,14 +21,10 @@ script:
 - |
   if [ "$TRAVIS_BRANCH" == "master" ]; then
     cross build --release --target x86_64-unknown-linux-musl
+    sh ci/build_apk.sh
   else
     cargo fmt --all -- --write-mode=diff
     cargo build
-  fi
-after_script:
-- |
-  if [ "$TRAVIS_BRANCH" == "master" ]; then
-    sh ci/build_apk.sh
   fi
 deploy:
   provider: releases

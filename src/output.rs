@@ -1,7 +1,8 @@
 use chrono::NaiveDateTime;
 use prettytable::{format, Table};
 use rusoto_secretsmanager::{GetSecretValueResponse, SecretListEntry};
-use rusoto_ssm::{Parameter, ParameterMetadata};
+
+use ssm::{Parameter, ParameterMetadata};
 
 fn split_take_last(ch: char, field: Option<String>) -> String {
     field
