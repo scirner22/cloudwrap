@@ -12,7 +12,8 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-use std::{collections::HashSet, fs::File, hash::Hash, io::prelude::*, path::PathBuf, process::Command};
+use std::{collections::HashSet, fs::File, hash::Hash, io::prelude::*, path::PathBuf,
+          process::Command};
 
 use clap::App;
 
@@ -29,8 +30,8 @@ use output::{Exportable, /*Postgres,*/ Printable};
 use types::Result;
 
 fn merge_fields<T>(service_fields: Vec<T>, shared_fields: Vec<T>) -> Vec<T>
-    where
-        T: Hash + Eq
+where
+    T: Hash + Eq,
 {
     let mut ssm: HashSet<_> = service_fields.into_iter().collect();
 
