@@ -19,11 +19,12 @@ install:
 - rustup component add rustfmt-preview
 script:
 - |
-  if [ "$TRAVIS_TAG" == "false" ]; then
+  if [ -n "$TRAVIS_TAG" ]; then
     echo "IN HERE!!!"
     cross build --release --target x86_64-unknown-linux-musl
     sh ci/build_apk.sh
   else
+    cargo update
     cargo fmt --all -- --write-mode=diff
     cargo build
   fi

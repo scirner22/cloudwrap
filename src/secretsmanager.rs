@@ -1,7 +1,8 @@
 use rusoto_core::Region;
-use rusoto_secretsmanager::{GetSecretValueRequest, GetSecretValueResponse, ListSecretsRequest,
-                            ListSecretsResponse, SecretListEntry, SecretsManager,
-                            SecretsManagerClient as Client};
+use rusoto_secretsmanager::{
+    GetSecretValueRequest, GetSecretValueResponse, ListSecretsRequest, ListSecretsResponse,
+    SecretListEntry, SecretsManager, SecretsManagerClient as Client,
+};
 
 use config::Config;
 use error::Error;

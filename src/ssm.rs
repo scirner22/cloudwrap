@@ -1,9 +1,10 @@
 use std::hash::{Hash, Hasher};
 
 use rusoto_core::Region;
-use rusoto_ssm::{DescribeParametersRequest, GetParametersByPathRequest,
-                 Parameter as RusotoParameter, ParameterMetadata as RusotoParameterMetadata,
-                 ParameterStringFilter, Ssm, SsmClient as Client};
+use rusoto_ssm::{
+    DescribeParametersRequest, GetParametersByPathRequest, Parameter as RusotoParameter,
+    ParameterMetadata as RusotoParameterMetadata, ParameterStringFilter, Ssm, SsmClient as Client,
+};
 
 use config::Config;
 use types::Result;
