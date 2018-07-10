@@ -1,7 +1,8 @@
 use rusoto_core::Region;
-use rusoto_secretsmanager::{GetSecretValueRequest, GetSecretValueResponse, ListSecretsRequest,
-                            ListSecretsResponse, SecretListEntry, SecretsManager,
-                            SecretsManagerClient as Client};
+use rusoto_secretsmanager::{
+    GetSecretValueRequest, GetSecretValueResponse, ListSecretsRequest, ListSecretsResponse,
+    SecretListEntry, SecretsManager, SecretsManagerClient as Client,
+};
 
 use config::Config;
 use error::Error;
@@ -20,7 +21,7 @@ impl Default for SecretsManagerClient {
 impl SecretsManagerClient {
     pub fn new(region: Region) -> Self {
         SecretsManagerClient {
-            inner: Client::simple(region),
+            inner: Client::new(region),
         }
     }
 

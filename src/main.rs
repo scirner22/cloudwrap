@@ -12,8 +12,9 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-use std::{collections::HashSet, fs::File, hash::Hash, io::prelude::*, path::PathBuf,
-          process::Command};
+use std::{
+    collections::HashSet, fs::File, hash::Hash, io::prelude::*, path::PathBuf, process::Command,
+};
 
 use clap::App;
 

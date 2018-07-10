@@ -17,9 +17,10 @@ install:
 - gem install --no-ri --no-rdoc fpm
 - cargo install --force cross
 - rustup component add rustfmt-preview
+- cargo update
 script:
 - |
-  if [ "$TRAVIS_BRANCH" == "master" ]; then
+  if [ -n "$TRAVIS_TAG" ]; then
     cross build --release --target x86_64-unknown-linux-musl
     sh ci/build_apk.sh
   else
@@ -31,6 +32,7 @@ deploy:
   api_key:
     secure: hAJdrQbd7PCp2BFjGgjYTiKIMaZSbJ+MMZ1GLxu23gOh6A9wgf5UT2WoO927DctQtWP7DsSCO8lmPkfUFEo3Q5ibtgy4zeKHf+iOtpifG/ytpNVfReSipBvZZaHRptbzaDBEVIVAfViFNEOXSa7MyHQmvmVpmPbQCArsb0pCZJGyflI5a/+W26dSr/uoeatUykLPVd0Wshh3fVLDzGdjb0LjDsx4tZQbfE2mx9zkJcPtDCnyp3npZOy+kCvljXrHtzGUCn8KnhffTCTNdIcHqBvQ4lYEn5OQkdsjYIdgKlLXjTBPoNLE4YJeqfdd2t555ahYWT9s6GvdFa+Q1d6zuPWs2w6UXBvB8fcBqAQiRCQuZmQmKbhduPGTv4SR0P6cW85jyqKT10CszG5n9ngHQbN/HsLGDLhyrUg24ACqKhheBW3Y178Rx8DGRCfnlv6wZZotDqdp22LuTE+tx+idtj4u6PDiac+WFjQ3phqZvO93oBwXsBgpxE088LwPQjGDEWqx09giHalRl4mE7PvtEM/i97+3tbOUhZojl1FUnGAV/wO0mmTl1Z0RUkwQa7dVS+pnMzAhmtLuiV9+aorPw+YP5r5kBdVSKukkLy160zjlzQAgeYdrjREZ7/2sHWHNhVvnwKWujsndQR/X0BOgS3IJiMs1LmZnIIA+ijxlWvw=
   file: cloudwrap_${TRAVIS_TAG}_x86_64.apk
+  skip_cleanup: true
   on:
     repo: scirner22/cloudwrap
     tags: true
