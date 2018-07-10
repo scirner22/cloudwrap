@@ -21,7 +21,7 @@ impl Default for SecretsManagerClient {
 impl SecretsManagerClient {
     pub fn new(region: Region) -> Self {
         SecretsManagerClient {
-            inner: Client::simple(region),
+            inner: Client::new(region),
         }
     }
 

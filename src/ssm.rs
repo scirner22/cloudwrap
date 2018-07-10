@@ -96,7 +96,7 @@ impl Default for SsmClient {
 impl SsmClient {
     pub fn new(region: Region) -> Self {
         SsmClient {
-            inner: Client::simple(region),
+            inner: Client::new(region),
         }
     }
 
