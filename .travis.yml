@@ -17,14 +17,13 @@ install:
 - gem install --no-ri --no-rdoc fpm
 - cargo install --force cross
 - rustup component add rustfmt-preview
+- cargo update
 script:
 - |
   if [ -n "$TRAVIS_TAG" ]; then
-    echo "IN HERE!!!"
     cross build --release --target x86_64-unknown-linux-musl
     sh ci/build_apk.sh
   else
-    cargo update
     cargo fmt --all -- --write-mode=diff
     cargo build
   fi
