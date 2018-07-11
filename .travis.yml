@@ -7,6 +7,9 @@ rust:
 - stable
 os:
 - linux
+branches:
+  only:
+    - master
 before_install:
 - source ~/.cargo/env || true
 - rustup self update
