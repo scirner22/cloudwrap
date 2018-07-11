@@ -15,6 +15,8 @@ namely a key that is nested under an environment and service name. The resource 
 `/{environment}/common/*` is also fetched and merged into the service resource path. Any keys
 from the `common` resource path can be overwritten by the service resource path.
 
+Values are converted from kebab case to upper case with underscores.
+
 This utility is only associated with fetching of the underlying AWS services. Another mechanism
 of your choice may be used to set the configuration in SSM Parameter Store and AWS Secrets
 Manager.
@@ -56,6 +58,49 @@ TWO=valuetwo
 ```
 
 See `cloudwrap --help` for a full listing of available commands.
+
+# Permissions
+
+### AWS IAM
+
+The following is a minimal example policy needed in order to use cloudwrap to wrap
+programs in AWS that make use of IAM permissions. The `kms:Decrypt` permission is only needed
+if your configuration parameters contain secure strings. Likewise, the kms key/alias used will have
+to be changed if you didn't use the ssm default.
+
+```
+resource "aws_iam_role_policy" "parameters" {
+  name = "${var.environment_name}-${var.service_name}-parameter-policy"
+  role = "${module.ecs_service_alb.ecs_task_iam_role_id}"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:GetParametersByPath"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/${var.environment_name}/${var.service_name}/*",
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/${var.environment_name}/common/*",
+      ]
+    },
+    {
+      "Action": [
+        "kms:Decrypt"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:aws:kms:${var.aws_region}:${var.aws_account_id}:key/alias/aws/ssm"
+    }
+  ]
+}
+EOF
+}
+```
 
 # License
 
