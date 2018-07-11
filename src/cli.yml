@@ -1,5 +1,5 @@
 name: cloudwrap
-version: "0.3.0"
+version: "0.4.0"
 author: Stephen Cirner <scirner22@gmail.com>
 about: Interfaces with AWS to provide an opinionated way to manage application configuration.
 args:
@@ -7,6 +7,7 @@ args:
         required: true
         index: 1
     - service:
+        help: Can be a comma separated list of services. The natural ordering, left to right, is used to resolve key conflicts.
         required: true
         index: 2
 subcommands:

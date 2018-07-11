@@ -30,40 +30,38 @@ use error::Error;
 use output::{Exportable, /*Postgres,*/ Printable};
 use types::Result;
 
-fn merge_fields<T>(service_fields: Vec<T>, shared_fields: Vec<T>) -> Vec<T>
+fn extend<T>(set: &mut HashSet<T>, fields: Vec<T>) -> ()
 where
     T: Hash + Eq,
 {
-    let mut ssm: HashSet<_> = service_fields.into_iter().collect();
-
-    for field in shared_fields {
-        ssm.insert(field);
+    for field in fields {
+        set.insert(field);
     }
-
-    ssm.into_iter().collect()
 }
 
-fn output_describe(config: &Config, shared_config: &Config) -> Result<()> {
+fn output_describe(configs: &Vec<Config>) -> Result<()> {
     let ssm_client = ssm::SsmClient::default();
-    let service_fields = ssm_client.describe_parameters(config)?;
-    let shared_fields = ssm_client.describe_parameters(shared_config)?;
-    let ssm = merge_fields(service_fields, shared_fields);
-    //let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    //let secrets_manager = secrets_manager.list_secrets(config)?;
+    let mut ssm = HashSet::new();
 
+    for config in configs {
+      let fields = ssm_client.describe_parameters(config)?;
+      extend(&mut ssm, fields);
+    }
+
+    let ssm = ssm.into_iter().collect::<Vec<_>>();
     ssm.get_table().printstd();
-    //secrets_manager.get_table().printstd();
 
     Ok(())
 }
 
-fn output_stdout(config: &Config, shared_config: &Config) -> Result<()> {
+fn output_stdout(configs: &Vec<Config>) -> Result<()> {
     let ssm_client = ssm::SsmClient::default();
-    let service_fields = ssm_client.get_parameters(config)?;
-    let shared_fields = ssm_client.get_parameters(shared_config)?;
-    let ssm = merge_fields(service_fields, shared_fields);
-    //let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    //let secrets_manager = secrets_manager.get_secret_values(config)?;
+    let mut ssm = HashSet::new();
+
+    for config in configs {
+      let fields = ssm_client.get_parameters(config)?;
+      extend(&mut ssm, fields);
+    }
 
     let mut closure = move |pairs: Vec<(String, String)>| {
         for (k, v) in pairs {
@@ -71,23 +69,24 @@ fn output_stdout(config: &Config, shared_config: &Config) -> Result<()> {
         }
     };
 
+    let ssm = ssm.into_iter().collect::<Vec<_>>();
     ssm.export().map(&mut closure);
-    //secrets_manager.export().map(&mut closure);
 
     Ok(())
 }
 
-fn output_file<S>(config: &Config, shared_config: &Config, path: S) -> Result<()>
+fn output_file<S>(configs: &Vec<Config>, path: S) -> Result<()>
 where
     S: Into<PathBuf>,
 {
     let path = path.into();
     let ssm_client = ssm::SsmClient::default();
-    let service_fields = ssm_client.get_parameters(config)?;
-    let shared_fields = ssm_client.get_parameters(shared_config)?;
-    let ssm = merge_fields(service_fields, shared_fields);
-    //let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    //let secrets_manager = secrets_manager.get_secret_values(config)?;
+    let mut ssm = HashSet::new();
+
+    for config in configs {
+      let fields = ssm_client.get_parameters(config)?;
+      extend(&mut ssm, fields);
+    }
 
     path.parent().map(|p| {
         if !p.exists() {
@@ -103,26 +102,25 @@ where
         }
     };
 
+    let ssm = ssm.into_iter().collect::<Vec<_>>();
     ssm.export().map(&mut closure);
-    //secrets_manager.export().map(&mut closure);
 
     Ok(())
 }
 
-fn output_exec(config: &Config, shared_config: &Config, cmd_args: &mut Vec<&str>) -> Result<()> {
+fn output_exec(configs: &Vec<Config>, cmd_args: &mut Vec<&str>) -> Result<()> {
     let cmd = cmd_args.remove(0);
-    let mut parameters = Vec::new();
     let ssm_client = ssm::SsmClient::default();
-    let service_fields = ssm_client.get_parameters(config)?;
-    let shared_fields = ssm_client.get_parameters(shared_config)?;
-    let ssm = merge_fields(service_fields, shared_fields);
-    //let secrets_manager = secretsmanager::SecretsManagerClient::default();
-    //let secrets_manager = secrets_manager.get_secret_values(config)?;
+    let mut parameters = Vec::new();
+    let mut ssm = HashSet::new();
 
+    for config in configs {
+      let fields = ssm_client.get_parameters(config)?;
+      extend(&mut ssm, fields);
+    }
+
+    let ssm = ssm.into_iter().collect::<Vec<_>>();
     ssm.export().map(|mut pairs| parameters.append(&mut pairs));
-    //secrets_manager
-    //    .export()
-    //    .map(|mut pairs| parameters.append(&mut pairs));
 
     let mut spawn = Command::new(cmd);
 
@@ -168,25 +166,29 @@ fn main() {
     let matches = App::from_yaml(yaml).get_matches();
 
     let environment = matches.value_of("environment").expect("required field");
-    let service = matches.value_of("service").expect("required field");
-    let service_config = Config::new(environment, service);
-    let shared_config = Config::new(environment, "common");
+    let services = matches.value_of("service").expect("required field");
+    let services = services.split(",");
+
+    let mut configs = vec!();
+    for service in services {
+        configs.push(Config::new(environment, service));
+    }
 
     let result = if matches.subcommand_matches("describe").is_some() {
-        output_describe(&service_config, &shared_config)
+        output_describe(&configs)
     } else if matches.subcommand_matches("stdout").is_some() {
-        output_stdout(&service_config, &shared_config)
+        output_stdout(&configs)
     } else if let Some(file_matches) = matches.subcommand_matches("file") {
         let path = file_matches.value_of("path").expect("required field");
 
-        output_file(&service_config, &shared_config, path)
+        output_file(&configs, path)
     } else if let Some(exec_matches) = matches.subcommand_matches("exec") {
         let mut cmd = exec_matches
             .values_of("cmd")
             .expect("required field")
             .collect();
 
-        output_exec(&service_config, &shared_config, &mut cmd)
+        output_exec(&configs, &mut cmd)
     }
     //else if let Some(shell_matches) = matches.subcommand_matches("shell") {
     //    let key = shell_matches.value_of("key").expect("required field");
