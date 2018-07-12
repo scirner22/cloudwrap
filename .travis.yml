@@ -10,6 +10,7 @@ os:
 branches:
   only:
     - master
+    - /\d+\.\d+\.\d+$/
 before_install:
 - source ~/.cargo/env || true
 - rustup self update
