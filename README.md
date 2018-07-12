@@ -12,8 +12,7 @@ environment variables.
 Key/value pairs are fetched by using resource paths. The path must be specified in the form of
 `/{environment}/{service_name}/key`. This utility always expects a path of three components,
 namely a key that is nested under an environment and service name. Multiple `service_name`s can
-be provided and the configurations are merged together. This allows you to have a path specified
-as `/{environment}/common/*` that can be shared across services.
+be provided and the configurations are merged together. See `cloudwrap --help`.
 
 Values are converted from kebab case to upper case with underscores.
 
@@ -68,10 +67,18 @@ programs in AWS that make use of IAM permissions. The `kms:Decrypt` permission i
 if your configuration parameters contain secure strings. Likewise, the kms key/alias used will have
 to be changed if you didn't use the ssm default.
 
+#### Command
+
+```
+cloudwrap dev auth-service exec java -jar {jar-name}.jar
+```
+
+#### Resource
+
 ```
 resource "aws_iam_role_policy" "parameters" {
-  name = "${var.environment_name}-${var.service_name}-parameter-policy"
-  role = "${module.ecs_service_alb.ecs_task_iam_role_id}"
+  name = "dev-auth-service-parameter-policy"
+  role = "${var.role_id}"
 
   policy = <<EOF
 {
@@ -85,8 +92,7 @@ resource "aws_iam_role_policy" "parameters" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/${var.environment_name}/${var.service_name}/*",
-        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/${var.environment_name}/common/*",
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/dev/auth-service/*"
       ]
     },
     {
