@@ -44,8 +44,8 @@ fn output_describe(configs: &Vec<Config>) -> Result<()> {
     let mut ssm = HashSet::new();
 
     for config in configs {
-      let fields = ssm_client.describe_parameters(config)?;
-      extend(&mut ssm, fields);
+        let fields = ssm_client.describe_parameters(config)?;
+        extend(&mut ssm, fields);
     }
 
     let ssm = ssm.into_iter().collect::<Vec<_>>();
@@ -59,8 +59,8 @@ fn output_stdout(configs: &Vec<Config>) -> Result<()> {
     let mut ssm = HashSet::new();
 
     for config in configs {
-      let fields = ssm_client.get_parameters(config)?;
-      extend(&mut ssm, fields);
+        let fields = ssm_client.get_parameters(config)?;
+        extend(&mut ssm, fields);
     }
 
     let mut closure = move |pairs: Vec<(String, String)>| {
@@ -84,8 +84,8 @@ where
     let mut ssm = HashSet::new();
 
     for config in configs {
-      let fields = ssm_client.get_parameters(config)?;
-      extend(&mut ssm, fields);
+        let fields = ssm_client.get_parameters(config)?;
+        extend(&mut ssm, fields);
     }
 
     path.parent().map(|p| {
@@ -115,8 +115,8 @@ fn output_exec(configs: &Vec<Config>, cmd_args: &mut Vec<&str>) -> Result<()> {
     let mut ssm = HashSet::new();
 
     for config in configs {
-      let fields = ssm_client.get_parameters(config)?;
-      extend(&mut ssm, fields);
+        let fields = ssm_client.get_parameters(config)?;
+        extend(&mut ssm, fields);
     }
 
     let ssm = ssm.into_iter().collect::<Vec<_>>();
@@ -169,7 +169,7 @@ fn main() {
     let services = matches.value_of("service").expect("required field");
     let services = services.split(",");
 
-    let mut configs = vec!();
+    let mut configs = vec![];
     for service in services {
         configs.push(Config::new(environment, service));
     }
