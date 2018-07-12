@@ -8,6 +8,7 @@ use config::Config;
 use error::Error;
 use types::Result;
 
+#[allow(dead_code)]
 pub struct SecretsManagerClient {
     inner: Client,
 }
@@ -25,6 +26,7 @@ impl SecretsManagerClient {
         }
     }
 
+    #[allow(dead_code)]
     pub fn list_secrets(&self, config: &Config) -> Result<Vec<SecretListEntry>> {
         let mut secrets = Vec::new();
         let mut req = ListSecretsRequest::default();
@@ -54,6 +56,7 @@ impl SecretsManagerClient {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_secret_value(&self, config: &Config, key: &str) -> Result<GetSecretValueResponse> {
         let full_key = format!("{}{}", config.as_path(), key);
         let secrets = self.list_secrets(config)?;
@@ -72,6 +75,7 @@ impl SecretsManagerClient {
         Err(Error::InvalidKey(full_key))
     }
 
+    #[allow(dead_code)]
     pub fn get_secret_values(&self, config: &Config) -> Result<Vec<GetSecretValueResponse>> {
         let mut secret_values = Vec::new();
         let secrets = self.list_secrets(config)?;

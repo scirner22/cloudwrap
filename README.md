@@ -11,9 +11,8 @@ environment variables.
 
 Key/value pairs are fetched by using resource paths. The path must be specified in the form of
 `/{environment}/{service_name}/key`. This utility always expects a path of three components,
-namely a key that is nested under an environment and service name. The resource path
-`/{environment}/common/*` is also fetched and merged into the service resource path. Any keys
-from the `common` resource path can be overwritten by the service resource path.
+namely a key that is nested under an environment and service name. Multiple `service_name`s can
+be provided and the configurations are merged together. See `cloudwrap --help`.
 
 Values are converted from kebab case to upper case with underscores.
 
@@ -31,20 +30,20 @@ Describe keys for a service:
 
 ```
 $ cloudwrap staging service-name-test describe
- KEY | VERSION |  LAST_MODIFIED_USER   | LAST_MODIFIED_DATE
------+---------+-----------------------+---------------------
- one |       1 | vienna@cloudwrap.com  | 2018-04-24 19:36:02
- two |       1 | lachy@cloudwrap.com   | 2018-04-24 19:36:16
+   KEY   | VERSION |  LAST_MODIFIED_USER   | LAST_MODIFIED_DATE
+---------+---------+-----------------------+---------------------
+ one-key |       1 | vienna@cloudwrap.com  | 2018-04-24 19:36:02
+ two     |       1 | lachy@cloudwrap.com   | 2018-04-24 19:36:16
 ```
 
 Print key/value pairs for a service:
 
 ```
 $ cloudwrap staging service-name-test stdout
- KEY | VALUE
------+----------
- one | valueone
- two | valuetwo
+   KEY   | VALUE
+---------+----------
+ one-key | valueone
+ two     | valuetwo
 
 ```
 
@@ -52,7 +51,7 @@ Execute a command with the configuration injected as environment variables:
 
 ```
 $ cloudwrap staging service-name-test exec env
-ONE=valueone
+ONE_KEY=valueone
 TWO=valuetwo
 ...
 ```
@@ -68,10 +67,18 @@ programs in AWS that make use of IAM permissions. The `kms:Decrypt` permission i
 if your configuration parameters contain secure strings. Likewise, the kms key/alias used will have
 to be changed if you didn't use the ssm default.
 
+#### Command
+
+```
+cloudwrap dev auth-service exec java -jar {jar-name}.jar
+```
+
+#### Resource
+
 ```
 resource "aws_iam_role_policy" "parameters" {
-  name = "${var.environment_name}-${var.service_name}-parameter-policy"
-  role = "${module.ecs_service_alb.ecs_task_iam_role_id}"
+  name = "dev-auth-service-parameter-policy"
+  role = "${var.role_id}"
 
   policy = <<EOF
 {
@@ -85,8 +92,7 @@ resource "aws_iam_role_policy" "parameters" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/${var.environment_name}/${var.service_name}/*",
-        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/${var.environment_name}/common/*",
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/dev/auth-service/*"
       ]
     },
     {
