@@ -5,11 +5,13 @@ about: Interfaces with AWS to provide an opinionated way to manage application c
 args:
     - environment:
         required: true
-        index: 1
+        short: e
+        long: environment
+        env: ENVIRONMENT
     - service:
         help: Can be a comma separated list of services. The natural ordering, left to right, is used to resolve key conflicts.
         required: true
-        index: 2
+        index: 1
 subcommands:
     - describe:
         about: Prints configuration keys and extra relevant information, does not include values.
