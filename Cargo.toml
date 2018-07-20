@@ -12,6 +12,7 @@ Wrapper utility that injects configuration fields into an executable command.
 [dependencies]
 chrono = "0.4"
 clap = { version = "2.31", features = ["yaml"] }
+ctrlc = { version = "3.0", features = ["termination"] }
 openssl-probe = "0.1"
 prettytable-rs = "0.6"
 rusoto_core = { git = "https://github.com/rusoto/rusoto", branch = "master" }
