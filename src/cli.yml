@@ -1,5 +1,5 @@
 name: cloudwrap
-version: "0.5.0"
+version: "0.5.1"
 author: Stephen Cirner <scirner22@gmail.com>
 about: Interfaces with AWS to provide an opinionated way to manage application configuration.
 args:
