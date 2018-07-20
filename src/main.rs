@@ -1,6 +1,7 @@
 extern crate chrono;
 #[macro_use]
 extern crate clap;
+extern crate ctrlc;
 extern crate openssl_probe;
 #[macro_use]
 extern crate prettytable;
@@ -14,6 +15,7 @@ extern crate serde_json;
 
 use std::{
     collections::HashSet, fs::File, hash::Hash, io::prelude::*, path::PathBuf, process::Command,
+    sync::atomic, sync::Arc, thread, time::Duration,
 };
 
 use clap::App;
@@ -29,6 +31,19 @@ use config::Config;
 use error::Error;
 use output::{Exportable, /*Postgres,*/ Printable};
 use types::Result;
+
+fn spawn_signal_handler() -> () {
+    let running_state = Arc::new(atomic::AtomicBool::new(true));
+    let shared_state = running_state.clone();
+
+    ctrlc::set_handler(move || {
+        shared_state.store(false, atomic::Ordering::SeqCst);
+    }).unwrap();
+
+    while running_state.load(atomic::Ordering::SeqCst) {
+        thread::sleep(Duration::from_secs(5));
+    }
+}
 
 fn extend<T>(set: &mut HashSet<T>, fields: Vec<T>) -> ()
 where
@@ -108,8 +123,31 @@ where
     Ok(())
 }
 
+fn run_command(command: &mut Command) -> Result<()> {
+    let mut child = command.spawn()?;
+
+    thread::spawn(move || {
+        spawn_signal_handler();
+    });
+
+    loop {
+        let child_result = child.try_wait()?;
+
+        match child_result {
+            Some(status) => {
+                if status.success() {
+                    return Ok(());
+                } else {
+                    return Err(Error::ExecError);
+                }
+            }
+            None => thread::sleep(Duration::from_secs(5)),
+        }
+    }
+}
+
 fn output_exec(configs: &Vec<Config>, cmd_args: &mut Vec<&str>) -> Result<()> {
-    let cmd = cmd_args.remove(0);
+    let command = cmd_args.remove(0);
     let ssm_client = ssm::SsmClient::default();
     let mut parameters = Vec::new();
     let mut ssm = HashSet::new();
@@ -122,23 +160,17 @@ fn output_exec(configs: &Vec<Config>, cmd_args: &mut Vec<&str>) -> Result<()> {
     let ssm = ssm.into_iter().collect::<Vec<_>>();
     ssm.export().map(|mut pairs| parameters.append(&mut pairs));
 
-    let mut spawn = Command::new(cmd);
+    let mut command = Command::new(command);
 
     if !parameters.is_empty() {
-        spawn.envs(parameters);
+        command.envs(parameters);
     }
 
     if !cmd_args.is_empty() {
-        spawn.args(cmd_args);
+        command.args(cmd_args);
     }
 
-    let status = spawn.status()?;
-
-    if status.success() {
-        Ok(())
-    } else {
-        Err(Error::ExecError)
-    }
+    run_command(&mut command)
 }
 
 //fn output_shell(config: &Config, key: &str) -> Result<()> {
