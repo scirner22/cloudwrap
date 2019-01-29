@@ -38,7 +38,8 @@ fn spawn_signal_handler() -> () {
 
     ctrlc::set_handler(move || {
         shared_state.store(false, atomic::Ordering::SeqCst);
-    }).unwrap();
+    })
+    .unwrap();
 
     while running_state.load(atomic::Ordering::SeqCst) {
         thread::sleep(Duration::from_secs(5));
