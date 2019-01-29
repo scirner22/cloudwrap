@@ -1,6 +1,6 @@
 # Cloudwrap
 
-<a href="https://travis-ci.org/scirner22/cloudwrap" title="Travis Build Status"><img src="https://travis-ci.org/scirner22/cloudwrap.svg?branch=master" alt="travis-badge"></img></a>
+<a href="https://travis-ci.org/Blackfynn/cloudwrap" title="Travis Build Status"><img src="https://travis-ci.org/Blackfynn/cloudwrap.svg?branch=master" alt="travis-badge"></img></a>
 
 NOTE: The AWS Secrets Manager interface is currently disabled.
 
