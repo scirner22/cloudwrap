@@ -130,19 +130,13 @@ fn run_command(command: &mut Command) -> Result<()> {
         spawn_signal_handler();
     });
 
-    loop {
-        let child_result = child.try_wait()?;
+    let status = child.wait()?;
 
-        match child_result {
-            Some(status) => {
-                if status.success() {
-                    return Ok(());
-                } else {
-                    return Err(Error::ExecError);
-                }
-            }
-            None => thread::sleep(Duration::from_secs(5)),
-        }
+    if status.success() {
+        return Ok(());
+    } else {
+        println!("Error code encountered: {:?}", status);
+        return Err(Error::ExecError);
     }
 }
 
