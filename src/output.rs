@@ -88,7 +88,8 @@ impl Printable for Vec<SecretListEntry> {
         for p in self {
             let key = p.get_service_name();
             // TODO is this the best way to display these fields?
-            let user = p.rotation_enabled
+            let user = p
+                .rotation_enabled
                 .map(|_| "lambda")
                 .unwrap_or("no rotation policy");
             let version = 0;

@@ -17,7 +17,7 @@ before_install:
 - sudo apt-get update -q
 install:
 - sudo apt-get install ruby ruby-dev rubygems-integration build-essential
-- gem install --no-ri --no-rdoc fpm
+- gem install fpm
 - cargo install --force cross
 - rustup component add rustfmt-preview
 - cargo update
@@ -27,7 +27,7 @@ script:
     cross build --release --target x86_64-unknown-linux-musl
     sh ci/build_apk.sh
   else
-    cargo fmt --all -- --write-mode=diff
+    cargo fmt --all -- --check
     cargo build
   fi
 deploy:
