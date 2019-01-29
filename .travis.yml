@@ -17,7 +17,7 @@ before_install:
 - sudo apt-get update -q
 install:
 - sudo apt-get install ruby ruby-dev rubygems-integration build-essential
-- gem install --no-ri --no-rdoc fpm
+- gem install fpm
 - cargo install --force cross
 - rustup component add rustfmt-preview
 - cargo update
