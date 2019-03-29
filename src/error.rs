@@ -27,8 +27,7 @@ impl<E: StdError + 'static> From<RusotoError<E>> for Error {
 
         match e {
             RusotoError::Service(_) => {
-                if e.source().is_some() {
-                    let source = e.source().unwrap();
+                if let Some(source) = e.source() {
                     if let Some(_) = source.downcast_ref::<GetSecretValueError>() {
                         Error::GetSecretValueError(description)
                     } else if let Some(_) = source.downcast_ref::<ListSecretsError>() {
