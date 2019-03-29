@@ -1,3 +1,4 @@
+use std::error::Error as StdError;
 use std::io::Error as IoError;
 
 use rusoto_core::RusotoError;
@@ -8,38 +9,50 @@ use serde_json::Error as JsonError;
 #[derive(Debug)]
 pub enum Error {
     ExecError,
-    GetSecretValueError(RusotoError<GetSecretValueError>),
-    ListSecretsError(RusotoError<ListSecretsError>),
-    DescribeParametersError(RusotoError<DescribeParametersError>),
-    GetParametersByPathError(RusotoError<GetParametersByPathError>),
+    GetSecretValueError(String),
+    ListSecretsError(String),
+    DescribeParametersError(String),
+    GetParametersByPathError(String),
+    RusotoUnknownServiceError(String),
     RusotoUnknownError(u16, String),
+    GenericRusotoError(String),
     InvalidKey(String),
     IoError(IoError),
     ParseError(JsonError),
 }
 
-impl From<RusotoError<DescribeParametersError>> for Error {
-    fn from(e: RusotoError<DescribeParametersError>) -> Self {
-        Error::DescribeParametersError(e)
-    }
-}
+impl<E: StdError + 'static> From<RusotoError<E>> for Error {
+    fn from(e: RusotoError<E>) -> Self {
+        let description = e.description().to_string();
 
-impl From<RusotoError<GetSecretValueError>> for Error {
-    fn from(e: RusotoError<GetSecretValueError>) -> Self {
-        Error::GetSecretValueError(e)
-    }
-}
-
-impl From<RusotoError<GetParametersByPathError>> for Error {
-    fn from(e: RusotoError<GetParametersByPathError>) -> Self {
         match e {
+            RusotoError::Service(_) => {
+                if e.source().is_some() {
+                    let source = e.source().unwrap();
+                    if let Some(_) = source.downcast_ref::<GetSecretValueError>() {
+                        Error::GetSecretValueError(description)
+                    } else if let Some(_) = source.downcast_ref::<ListSecretsError>() {
+                        Error::ListSecretsError(description)
+                    } else if let Some(_) = source.downcast_ref::<DescribeParametersError>() {
+                        Error::DescribeParametersError(description)
+                    } else if let Some(_) = source.downcast_ref::<GetParametersByPathError>() {
+                        Error::GetParametersByPathError(description)
+                    } else {
+                        Error::RusotoUnknownServiceError(description)
+                    }
+                } else {
+                    Error::RusotoUnknownServiceError(description)
+                }
+            }
+
             // Unknown errors do not show the actual readable response
             // from AWS by default
             RusotoError::Unknown(buffered_response) => Error::RusotoUnknownError(
                 buffered_response.status.as_u16(),
                 buffered_response.body_as_str().to_string(),
             ),
-            _ => Error::GetParametersByPathError(e),
+
+            _ => Error::GenericRusotoError(e.description().to_string()),
         }
     }
 }
@@ -53,11 +66,5 @@ impl From<IoError> for Error {
 impl From<JsonError> for Error {
     fn from(e: JsonError) -> Self {
         Error::ParseError(e)
-    }
-}
-
-impl From<RusotoError<ListSecretsError>> for Error {
-    fn from(e: RusotoError<ListSecretsError>) -> Self {
-        Error::ListSecretsError(e)
     }
 }
