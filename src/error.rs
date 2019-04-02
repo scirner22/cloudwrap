@@ -1,7 +1,7 @@
 use std::error::Error as StdError;
 use std::io::Error as IoError;
 
-use rusoto_core::RusotoError;
+use rusoto_core::{request::HttpDispatchError, RusotoError};
 use rusoto_secretsmanager::{GetSecretValueError, ListSecretsError};
 use rusoto_ssm::{DescribeParametersError, GetParametersByPathError};
 use serde_json::Error as JsonError;
@@ -15,7 +15,10 @@ pub enum Error {
     GetParametersByPathError(String),
     RusotoUnknownServiceError(String),
     RusotoUnknownError(u16, String),
-    GenericRusotoError(String),
+    RusotoCredentialsError(String),
+    RusotoValidationError(String),
+    RusotoHttpDispatchError(HttpDispatchError),
+    RusotoParseError(String),
     InvalidKey(String),
     IoError(IoError),
     ParseError(JsonError),
@@ -51,7 +54,10 @@ impl<E: StdError + 'static> From<RusotoError<E>> for Error {
                 buffered_response.body_as_str().to_string(),
             ),
 
-            _ => Error::GenericRusotoError(e.description().to_string()),
+            RusotoError::Credentials(error) => Error::RusotoCredentialsError(error.message),
+            RusotoError::Validation(details) => Error::RusotoValidationError(details),
+            RusotoError::ParseError(details) => Error::RusotoParseError(details),
+            RusotoError::HttpDispatch(error) => Error::RusotoHttpDispatchError(error),
         }
     }
 }
