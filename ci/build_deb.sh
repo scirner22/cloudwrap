@@ -17,7 +17,6 @@ fpm \
   --verbose \
   -s dir \
   -t deb \
-  -a x86_64 \
   --prefix="$BF_PATH" \
   --deb-no-default-config-files \
   -n "$RELEASE_NAME" \
