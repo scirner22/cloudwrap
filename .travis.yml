@@ -24,9 +24,11 @@ install:
 script:
 - |
   if [ -n "$TRAVIS_TAG" ]; then
+    cargo clean
     cross build --release --target x86_64-unknown-linux-gnu
     sh ci/build_deb.sh
 
+    cargo clean
     cross build --release --target x86_64-unknown-linux-musl
     sh ci/build_apk.sh
   else
