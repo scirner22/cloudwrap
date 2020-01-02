@@ -15,7 +15,7 @@ args:
         long: service
         env: CLOUDWRAP_SERVICE
     - output-non-sensitive:
-        help: Will only ouput non sensitive configuration in ssm
+        help: Will only output non sensitive configuration in ssm
         required: false
         short: o
         long: output-non-sensitive
