@@ -170,6 +170,7 @@ fn output_exec(
                     .clone()
                     .type_
                     .map(|type_| match type_.as_str() {
+                        // Only include types known to not contain sensitive matierial
                         "String" => true,
                         "Number" => true,
                         _ => false,
