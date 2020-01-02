@@ -222,7 +222,7 @@ fn main() {
     let environment = matches.value_of("environment").expect("required field");
     let services = matches.value_of("service").expect("required field");
     let services = services.split(",");
-    let output_non_sensitive = value_t!(matches, "output-non-sensitive", bool).unwrap_or(false);
+    let output_non_sensitive = value_t!(matches, "output-non-sensitive", bool).unwrap_or_default();
 
     let mut configs = vec![];
     for service in services {
