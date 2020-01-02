@@ -170,8 +170,9 @@ fn output_exec(
                     .clone()
                     .type_
                     .map(|type_| match type_.as_str() {
-                        "SecureString" => false,
-                        _ => true,
+                        "String" => true,
+                        "Number" => true,
+                        _ => false,
                     })
                     .unwrap_or_default()
             })
