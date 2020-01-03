@@ -141,11 +141,7 @@ fn run_command(command: &mut Command) -> Result<()> {
     }
 }
 
-fn output_exec(
-    configs: &Vec<Config>,
-    cmd_args: &mut Vec<&str>,
-    output_non_sensitive: bool,
-) -> Result<()> {
+fn output_exec(configs: &Vec<Config>, cmd_args: &mut Vec<&str>) -> Result<()> {
     let command = cmd_args.remove(0);
     let ssm_client = ssm::SsmClient::default();
     let mut parameters = Vec::new();
@@ -157,31 +153,6 @@ fn output_exec(
     }
 
     let ssm = ssm.into_iter().collect::<Vec<_>>();
-    if output_non_sensitive {
-        let mut closure = move |pairs: Vec<(String, String)>| {
-            for (k, v) in pairs {
-                println!("{}={}", k, v);
-            }
-        };
-        ssm.clone()
-            .into_iter()
-            .filter(|parameter| {
-                parameter
-                    .clone()
-                    .type_
-                    .map(|type_| match type_.as_str() {
-                        // Only include types known to not contain sensitive matierial
-                        "String" => true,
-                        "Number" => true,
-                        _ => false,
-                    })
-                    .unwrap_or_default()
-            })
-            .collect::<Vec<_>>()
-            .export()
-            .map(&mut closure);
-    }
-
     ssm.export().map(|mut pairs| parameters.append(&mut pairs));
 
     let mut command = Command::new(command);
@@ -224,7 +195,6 @@ fn main() {
     let environment = matches.value_of("environment").expect("required field");
     let services = matches.value_of("service").expect("required field");
     let services = services.split(",");
-    let output_non_sensitive = value_t!(matches, "output-non-sensitive", bool).unwrap_or_default();
 
     let mut configs = vec![];
     for service in services {
@@ -245,7 +215,7 @@ fn main() {
             .expect("required field")
             .collect();
 
-        output_exec(&configs, &mut cmd, output_non_sensitive)
+        output_exec(&configs, &mut cmd)
     }
     //else if let Some(shell_matches) = matches.subcommand_matches("shell") {
     //    let key = shell_matches.value_of("key").expect("required field");

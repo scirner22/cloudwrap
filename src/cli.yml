@@ -14,12 +14,6 @@ args:
         short: s
         long: service
         env: CLOUDWRAP_SERVICE
-    - output-non-sensitive:
-        help: Will only output non sensitive configuration in ssm
-        required: false
-        short: o
-        long: output-non-sensitive
-        env: OUTPUT_NON_SENSITIVE
 subcommands:
     - describe:
         about: Prints configuration keys and extra relevant information, does not include values.
