@@ -9,7 +9,7 @@ use rusoto_ssm::{
 use config::Config;
 use types::Result;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Parameter {
     pub name: Option<String>,
     pub type_: Option<String>,

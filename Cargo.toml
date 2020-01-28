@@ -1,6 +1,6 @@
 [package]
 name = "cloudwrap"
-version = "0.5.7"
+version = "0.5.8"
 authors = ["Stephen Cirner <scirner22@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/Blackfynn/cloudwrap"
