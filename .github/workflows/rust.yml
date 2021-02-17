@@ -1,0 +1,75 @@
+name: Rust
+
+on:
+  push:
+    tags:
+      - '*.*.*'  # Match anything resembling semver
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Get release tag
+      id: get_release_tag
+      run: |
+        echo "::set-output name=tag_name::${GITHUB_REF:10}"  # Export just the tag name, e.g. "0.0.1" instead of "refs/tags/0.0.1" as a step output
+    - name: Before install
+      run: |
+        echo "Building ${{ steps.get_release_tag.outputs.tag_name }}"
+        sudo apt update -q
+        sudo apt install pkg-config libssl-dev
+        source ~/.cargo/env || true
+        rustup self update
+        rustup update
+        rustup component add rustfmt
+    - name: Install
+      run: |
+        sudo apt install ruby ruby-dev build-essential
+        sudo gem install --no-document fpm
+        cargo update
+        cargo install --version 0.1.16 cross  # See https://github.com/rust-embedded/cross/issues/229#issuecomment-590546949
+    - name: Build
+      run: |
+        cargo clean
+        cross build --release --target x86_64-unknown-linux-gnu
+        sh ci/build_deb.sh
+        cargo clean
+        cross build --release --target x86_64-unknown-linux-musl
+        sh ci/build_apk.sh
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Upload Release APK
+      id: upload_apk_asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./cloudwrap_${{ steps.get_release_tag.outputs.tag_name }}_x86_64.apk
+        asset_name: cloudwrap_${{ steps.get_release_tag.outputs.tag_name }}_x86_64.apk
+        asset_content_type: application/octet-stream
+    - name: Upload Release Debian Package
+      id: upload_deb_asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./cloudwrap_${{ steps.get_release_tag.outputs.tag_name }}_amd64.deb
+        asset_name: cloudwrap_${{ steps.get_release_tag.outputs.tag_name }}_amd64.deb
+        asset_content_type: application/octet-stream
