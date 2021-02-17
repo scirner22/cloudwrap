@@ -18,7 +18,7 @@ before_install:
 install:
 - sudo apt-get install ruby ruby-dev rubygems-integration build-essential
 - gem install fpm
-- cargo install --force cross
+- cargo install --force --version 0.1.16 cross  # See https://github.com/rust-embedded/cross/issues/229#issuecomment-590546949
 - rustup component add rustfmt-preview
 - cargo update
 script:
