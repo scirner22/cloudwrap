@@ -1,7 +1,5 @@
-use std::error::Error as StdError;
 use std::io::Error as IoError;
 
-use rusoto_core::{request::HttpDispatchError, RusotoError};
 use rusoto_secretsmanager::{GetSecretValueError, ListSecretsError};
 use rusoto_ssm::{DescribeParametersError, GetParametersByPathError};
 use serde_json::Error as JsonError;
@@ -13,52 +11,32 @@ pub enum Error {
     ListSecretsError(String),
     DescribeParametersError(String),
     GetParametersByPathError(String),
-    RusotoUnknownServiceError(String),
-    RusotoUnknownError(u16, String),
-    RusotoCredentialsError(String),
-    RusotoValidationError(String),
-    RusotoHttpDispatchError(HttpDispatchError),
-    RusotoParseError(String),
     InvalidKey(String),
     IoError(IoError),
     ParseError(JsonError),
 }
 
-impl<E: StdError + 'static> From<RusotoError<E>> for Error {
-    fn from(e: RusotoError<E>) -> Self {
-        let description = e.description().to_string();
+impl From<ListSecretsError> for Error {
+    fn from(e: ListSecretsError) -> Self {
+        Error::ListSecretsError(e.to_string())
+    }
+}
 
-        match e {
-            RusotoError::Service(_) => {
-                if let Some(source) = e.source() {
-                    if let Some(_) = source.downcast_ref::<GetSecretValueError>() {
-                        Error::GetSecretValueError(description)
-                    } else if let Some(_) = source.downcast_ref::<ListSecretsError>() {
-                        Error::ListSecretsError(description)
-                    } else if let Some(_) = source.downcast_ref::<DescribeParametersError>() {
-                        Error::DescribeParametersError(description)
-                    } else if let Some(_) = source.downcast_ref::<GetParametersByPathError>() {
-                        Error::GetParametersByPathError(description)
-                    } else {
-                        Error::RusotoUnknownServiceError(description)
-                    }
-                } else {
-                    Error::RusotoUnknownServiceError(description)
-                }
-            }
+impl From<GetSecretValueError> for Error {
+    fn from(e: GetSecretValueError) -> Self {
+        Error::GetSecretValueError(e.to_string())
+    }
+}
 
-            // Unknown errors do not show the actual readable response
-            // from AWS by default
-            RusotoError::Unknown(buffered_response) => Error::RusotoUnknownError(
-                buffered_response.status.as_u16(),
-                buffered_response.body_as_str().to_string(),
-            ),
+impl From<DescribeParametersError> for Error {
+    fn from(e: DescribeParametersError) -> Self {
+        Error::DescribeParametersError(e.to_string())
+    }
+}
 
-            RusotoError::Credentials(error) => Error::RusotoCredentialsError(error.message),
-            RusotoError::Validation(details) => Error::RusotoValidationError(details),
-            RusotoError::ParseError(details) => Error::RusotoParseError(details),
-            RusotoError::HttpDispatch(error) => Error::RusotoHttpDispatchError(error),
-        }
+impl From<GetParametersByPathError> for Error {
+    fn from(e: GetParametersByPathError) -> Self {
+        Error::GetParametersByPathError(e.to_string())
     }
 }
 
