@@ -16,7 +16,7 @@ before_install:
 - rustup self update
 - sudo apt-get update -q
 install:
-- sudo apt-get install ruby ruby-dev rubygems-integration build-essential
+- sudo apt-get install ruby ruby-dev rubygems-integration build-essential libssl-dev
 - gem install fpm
 - cargo install --force cross
 - rustup component add rustfmt-preview
